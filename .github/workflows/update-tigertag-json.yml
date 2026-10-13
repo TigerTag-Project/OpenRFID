@@ -5,6 +5,8 @@ on:
     # Every Monday at 06:00 UTC
     - cron: '0 6 * * 1'
   workflow_dispatch:
+  push:
+    branches: [ci-test-auto-update]
 
 permissions:
   contents: write
