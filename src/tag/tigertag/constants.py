@@ -22,12 +22,9 @@ OFF_BED_TEMP_MAX = 31
 OFF_TIMESTAMP = 32
 OFF_TD = 44
 OFF_METADATA = 48
-# The 32-byte metadata region holds an optional emoji glyph followed by a
-# UTF-8 custom message. The emoji encoding is not well-defined across writers
-# (and most writers omit it), so the parser exposes the message starting at
-# OFF_METADATA and lets the application strip any decorative prefix. The
-# spec caps the message at 28 bytes; the trailing 4 bytes of the metadata
-# region are reserved.
+# Custom message: 28 bytes of free UTF-8 text (emoji allowed) at +48, pages
+# 0x10-0x16. It is followed by Measure Available (u24 BE, +76) and a reserved
+# byte (+79).
 OFF_MESSAGE = OFF_METADATA
 MESSAGE_LENGTH = 28
 OFF_SIGNATURE = 80

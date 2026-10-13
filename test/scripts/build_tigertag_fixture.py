@@ -61,8 +61,8 @@ def build_user_data() -> bytes:
     buf[Constants.OFF_WEIGHT + 1] = (weight >> 8) & 0xFF
     buf[Constants.OFF_WEIGHT + 2] = weight & 0xFF
     # Hotend temps
-    struct.pack_into(">H", buf, Constants.OFF_TEMP_MIN, 230)
-    struct.pack_into(">H", buf, Constants.OFF_TEMP_MAX, 190)
+    struct.pack_into(">H", buf, Constants.OFF_TEMP_MIN, 190)
+    struct.pack_into(">H", buf, Constants.OFF_TEMP_MAX, 230)
     # Bed temps
     buf[Constants.OFF_BED_TEMP_MIN] = 50
     buf[Constants.OFF_BED_TEMP_MAX] = 60
@@ -83,8 +83,14 @@ def build_user_data() -> bytes:
 def build_binary() -> bytes:
     user = build_user_data()
     out = bytearray(TOTAL_LEN)
-    # Header bytes are not parsed, but mimic real NTAG dumps with a UID block.
-    out[0:9] = b"\x04\xde\xad\xbe\xef\xca\xfe\x00\x00"
+    # Mimic a real NTAG215 dump: 7-byte UID with its BCC check bytes (pages 0-2)
+    # and the capability container (page 3), whose size byte (0x3E = NTAG215)
+    # tells the reader how much physical memory the tag has.
+    uid = b"\x04\xde\xad\xbe\xef\xca\xfe"
+    bcc0 = 0x88 ^ uid[0] ^ uid[1] ^ uid[2]
+    bcc1 = uid[3] ^ uid[4] ^ uid[5] ^ uid[6]
+    out[0:12] = uid[0:3] + bytes([bcc0]) + uid[3:7] + bytes([bcc1, 0x48, 0x00, 0x00])
+    out[12:16] = b"\xe1\x10\x3e\x00"
     out[HEADER_LEN : HEADER_LEN + len(user)] = user
     return bytes(out)
 
@@ -100,8 +106,8 @@ def expected_yaml() -> dict:
         "diameter_mm": 1.75,
         "drying_temp_c": 45.0,
         "drying_time_hours": 8.0,
-        "hotend_max_temp_c": 190.0,
-        "hotend_min_temp_c": 230.0,
+        "hotend_max_temp_c": 230.0,
+        "hotend_min_temp_c": 190.0,
         "manufacturer": MANUFACTURER_NAME,
         "manufacturing_date": "2025-01-01",
         "message": MESSAGE,
